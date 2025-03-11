@@ -1,13 +1,14 @@
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Database{
+public class Database {
 
     private ArrayList<Mahasiswa> data = new ArrayList<>();
-    private String filename= "src/data.csv";
+    private String filename = "src/data.csv";
     private Path path = Path.of(filename);
 
     public Database() {
@@ -18,136 +19,107 @@ public class Database{
         return data;
     }
 
-    public void open(){
-
+    public void open() {
         try {
             List<String> lines = Files.readAllLines(path);
-            data = new ArrayList<>();
-            for (int i = 1; i <lines.size() ; i++) {
-                String line = lines.get(i);
-                String[] element = line.split(";");
-                String nim = element[0];
-                String nama = element[1];
-                String alamat = element[2];
-                int semester = Integer.parseInt(element[3]);
-                int sks = Integer.parseInt(element[4]);
-                double ipk = Double.parseDouble(element[5]);
+            data.clear(); // Pastikan data tidak menumpuk saat di-load ulang
 
-                Mahasiswa mhs = new Mahasiswa(nim, nama, alamat, semester, sks, ipk);
-                data.add(mhs);
+            for (int i = 1; i < lines.size(); i++) { // Mulai dari indeks 1, karena indeks 0 adalah header
+                String line = lines.get(i).trim();
+
+                if (!line.isEmpty()) { // Pastikan tidak ada baris kosong yang terbaca
+                    String[] element = line.split(";");
+
+                    if (element.length == 6) { // Pastikan format data sesuai
+                        String nim = element[0];
+                        String nama = element[1];
+                        String alamat = element[2];
+                        int semester = Integer.parseInt(element[3].trim());
+                        int sks = Integer.parseInt(element[4].trim());
+                        double ipk = Double.parseDouble(element[5].trim());
+
+                        Mahasiswa mhs = new Mahasiswa(nim, nama, alamat, semester, sks, ipk);
+                        data.add(mhs);
+                    } else {
+                        System.err.println("Format data salah pada baris: " + (i + 1));
+                    }
+                }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Gagal membaca file: " + e.getMessage());
         }
     }
+
     public void save() {
         StringBuilder sb = new StringBuilder();
-        sb.append("NIM,NAMA,ALAMAT (KOTA),SEMESTER,SKS,IPK\n");
+        sb.append("NIM;NAMA;ALAMAT (KOTA);SEMESTER;SKS;IPK\n"); // Sesuaikan header agar tetap rapi
 
-        if (!data.isEmpty()) {
-            for (int i = 0; i < data.size(); i++) {
-                Mahasiswa mhs = data.get(i);
-                String line = mhs.getNim() + ";" + mhs.getNama() + ";" + mhs.getAlamat() + ";" + mhs.getSemester() + ";" + mhs.getSks() + ";" + mhs.getIpk() + "\n";
-                sb.append(line);
-            }
+        for (Mahasiswa mhs : data) {
+            String line = mhs.getNim() + ";" + mhs.getNama() + ";" + mhs.getAlamat() + ";"
+                    + mhs.getSemester() + ";" + mhs.getSks() + ";" + mhs.getIpk() + "\n";
+            sb.append(line);
         }
 
         try {
-            Files.writeString(path,sb.toString());
+            Files.writeString(path, sb.toString());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Gagal menyimpan file: " + e.getMessage());
         }
     }
 
-    public void view(){
-        System.out.println("=========================================================================================");
-        System.out.printf("| %-8.8S |", "NIM");
-        System.out.printf(" %-20.20S |", "NAMA");
-        System.out.printf(" %-20.20S |", "ALAMAT");
-        System.out.printf(" %8.8S |", "SEMESTER");
-        System.out.printf(" %3.3S |", "SKS");
-        System.out.printf(" %4.4S |%n", "IPK");
-        System.out.println("-----------------------------------------------------------------------------------------");
+    public void view() {
+        System.out.println("==================================================================================");
+        System.out.printf("| %-8.8s | %-20.20s | %-20.20s | %8.8s | %3.3s | %4.4s |\n",
+                "NIM", "NAMA", "ALAMAT", "SEMESTER", "SKS", "IPK");
+        System.out.println("----------------------------------------------------------------------------------");
+
         for (Mahasiswa mhs : data) {
-            System.out.printf("| %-8S |", mhs.getNim());
-            System.out.printf(" %-20.20S |", mhs.getNama());
-            System.out.printf(" %-20.20S |", mhs.getAlamat());
-            System.out.printf(" %8.8S |", mhs.getSemester());
-            System.out.printf(" %3.3S |", mhs.getSks());
-            System.out.printf(" %4.4S |", mhs.getIpk());
-            System.out.println();
-
+            System.out.printf("| %-8s | %-20.20s | %-20.20s | %8d | %3d | %4.2f |\n",
+                    mhs.getNim(), mhs.getNama(), mhs.getAlamat(),
+                    mhs.getSemester(), mhs.getSks(), mhs.getIpk());
         }
-        System.out.println("-----------------------------------------------------------------------------------------");
-
-
+        System.out.println("----------------------------------------------------------------------------------");
     }
 
     public boolean insert(String nim, String nama, String alamat, int semester, int sks, double ipk) {
-        boolean status = true;
-        if (!data.isEmpty()) {
-            for (int i = 0; i < data.size(); i++) {
-                if (data.get(i).getNim().equalsIgnoreCase(nim)) {
-                    status = false;
-                    break;
-                }
+        for (Mahasiswa mhs : data) {
+            if (mhs.getNim().equalsIgnoreCase(nim)) {
+                System.out.println("Gagal: NIM " + nim + " sudah ada di database.");
+                return false;
             }
-
         }
-        if (status == true){
+
+        Mahasiswa newMhs = new Mahasiswa(nim, nama, alamat, semester, sks, ipk);
+        data.add(newMhs);
+        save();
+        return true;
+    }
+
+    public int search(String nim) {
+        for (int i = 0; i < data.size(); i++) {
+            if (data.get(i).getNim().equalsIgnoreCase(nim)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public boolean update(int index, String nim, String nama, String alamat, int semester, int sks, double ipk) {
+        if (index >= 0 && index < data.size()) {
             Mahasiswa mhs = new Mahasiswa(nim, nama, alamat, semester, sks, ipk);
-            data.add(mhs);
+            data.set(index, mhs);
             save();
+            return true;
         }
-        return status;
-    }
-
-    public int search(String nim){
-        int index = -1;
-        if (!data.isEmpty()) {
-            for (int i = 0; i < data.size(); i++) {
-                if (data.get(i).getNim().equalsIgnoreCase(nim)) {
-                    index = i;
-                    break;
-                }
-
-
-            }
-
-        }
-
-        return index;
-
-    }
-
-    public boolean update(int index, String nim, String nama, String alamat, int semester, int sks, double ipk ){
-        boolean status = false;
-        if (!data.isEmpty()) {
-            if (index <= 0 && index < data.size()) {
-                Mahasiswa mhs = new Mahasiswa(nim, nama, alamat, semester, sks, ipk);
-                data.set(index, mhs);
-                save();
-                status = true;
-
-            }
-        }
-        return status;
-
+        return false;
     }
 
     public boolean delete(int index) {
-        boolean status = false;
-        if (!data.isEmpty()) {
+        if (index >= 0 && index < data.size()) {
             data.remove(index);
             save();
-            status = true;
+            return true;
         }
-
-
-            return status;
+        return false;
     }
-
-
-
-
-    }
+}

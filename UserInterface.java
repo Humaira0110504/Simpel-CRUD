@@ -1,143 +1,146 @@
-import com.sun.source.tree.WhileLoopTree;
-
 import java.util.Scanner;
 
 public class UserInterface {
+
     public static void tampilkanMenu() {
         System.out.println();
-        System.out.println("+==================+");
-        System.out.println("|    Pilih menu:   |");
-        System.out.println("+------------------+");
-        System.out.println("| [C] : Create     |");
-        System.out.println("| [R] : Read       |");
-        System.out.println("| [U] : Update     |");
-        System.out.println("| [D] : Delete     |");
-        System.out.println("| [X] : Exit       |");
-        System.out.println("---------------------");
+        System.out.println("+================+");
+        System.out.println("| Pilih menu:   |");
+        System.out.println("+----------------+");
+        System.out.println("| [C] : Create  |");
+        System.out.println("| [R] : Read    |");
+        System.out.println("| [U] : Update  |");
+        System.out.println("| [D] : Delete  |");
+        System.out.println("| [X] : Exit    |");
+        System.out.println("+================+");
     }
-
 
     public static void main(String[] args) {
         Database db = new Database();
-        System.out.println("SELAMAT DATANG DI APLIKASI CRUD TEXT DATABASE");
-        while (true){
+        Scanner sc = new Scanner(System.in);  // Scanner dibuat satu kali
+
+        System.out.println("APLIKASI SIMPLE CRUD TEXT DATABASE");
+        while (true) {
             tampilkanMenu();
-            Scanner sc = new Scanner(System.in);
-            System.out.print("pilih : ");
-            String pilihan = sc.nextLine();
-            pilihan = pilihan.toUpperCase();
+            System.out.print("Pilih : ");
+            String pilihan = sc.nextLine().trim().toUpperCase();
 
             switch (pilihan) {
                 case "C":
-                    System.out.println("INFO: Anda memilih menu craate");
-                    System.out.println("--------------------------------------");
+                    System.out.println("INFO: Anda memilih menu Create");
+                    System.out.println("--------------------------------");
                     System.out.println("INPUT DATA BARU");
-                    System.out.print("NIM                : ");
+                    System.out.print("NIM             : ");
                     String nim = sc.nextLine();
-                    System.out.print("NAMA MAHASISWA     : ");
+                    System.out.print("NAMA MAHASISWA  : ");
                     String nama = sc.nextLine();
-                    System.out.print("ALAMAT             : ");
+                    System.out.print("ALAMAT          : ");
                     String alamat = sc.nextLine();
-                    System.out.print("SEMESTER           : ");
+                    System.out.print("SEMESTER        : ");
                     int semester = sc.nextInt();
-                    System.out.print("SKS               : ");
+                    System.out.print("SKS             : ");
                     int sks = sc.nextInt();
-                    System.out.print("IPK               : ");
+                    System.out.print("IPK             : ");
                     double ipk = sc.nextDouble();
-                    sc.nextLine();
-                    System.out.println("--------------------------------------");
-                    boolean status = db.insert(nim,nama,alamat,semester,sks,ipk);
-                    if(status == true){
+                    sc.nextLine(); // Membersihkan buffer
+
+                    boolean status = db.insert(nim, nama, alamat, semester, sks, ipk);
+                    if (status) {
                         System.out.println("DATA BARU BERHASIL DITAMBAHKAN");
                     } else {
-                        System.err.println("NIM " + nim + " sudah ada di database");
-                        System.err.println("GAGAL MENAMBAHKAN DATA BARU");
+                        System.out.println("NIM " + nim + " sudah ada di database");
+                        System.out.println("GAGAL MENAMBAHKAN DATA BARU");
                     }
-
-                    System.out.println("--------------------------------------------------");
-
                     break;
-                case "R" :
+
+                case "R":
                     System.out.println("INFO: Anda memilih menu Read");
                     db.view();
                     break;
+
                 case "U":
                     System.out.println("INFO: Anda memilih menu Update");
                     db.view();
-                    System.out.print("Input key (NIM Mahasiswa yang akan diupdate): ");
+                    System.out.print("Input Key (NIM Mahasiswa yang akan diupdate): ");
                     String key = sc.nextLine();
                     int index = db.search(key);
-                    if (index >= 0){
-                        System.out.println("Anda akan meng-update data " + db.getData().get(index));
-                        System.out.println("--------------------------------------------------");
+
+                    if (index >= 0) {
+                        Mahasiswa mhs = db.getData().get(index);
+                        System.out.println("Anda akan meng-update data:");
+                        System.out.println("NIM: " + mhs.getNim() + ", Nama: " + mhs.getNama() + ", Alamat: " + mhs.getAlamat());
+                        System.out.println("--------------------------------");
                         System.out.println("INPUT DATA BARU");
-                        System.out.print("NIM                : ");
-                        nim = sc.nextLine();
-                        System.out.print("NAMA MAHASISWA     : ");
-                        nama = sc.nextLine();
-                        System.out.print("ALAMAT             : ");
-                        alamat = sc.nextLine();
-                        System.out.print("SEMESTER           : ");
-                        semester = sc.nextInt();
-                        System.out.print("SKS               : ");
-                        sks = sc.nextInt();
-                        System.out.print("IPK               : ");
-                        ipk = sc.nextDouble();
-                        sc.nextLine();
-                        System.out.println("--------------------------------------------------");
-                        status = db.update(index, nim, nama, alamat, semester, sks, ipk);
-                        if (status == true) {
-                            System.out.println("DATA BERHASIL DIPERBARUI");
-                        } else {
-                            System.err.println("GAGAL MEMPERBARUI DATA");
+
+                        // Cek apakah NIM baru sudah ada
+                        System.out.print("NIM             : ");
+                        String nimBaru = sc.nextLine();
+                        if (db.search(nimBaru) >= 0 && !nimBaru.equals(mhs.getNim())) {
+                            System.err.println("ERROR: NIM " + nimBaru + " sudah ada di database. Update gagal.");
+                            break;  // Keluar dari menu Update jika NIM sudah ada
                         }
 
-                        System.out.println("--------------------------------------------------");
+                        System.out.print("NAMA MAHASISWA  : ");
+                        nama = sc.nextLine();
+                        System.out.print("ALAMAT          : ");
+                        alamat = sc.nextLine();
+                        System.out.print("SEMESTER        : ");
+                        semester = sc.nextInt();
+                        System.out.print("SKS             : ");
+                        sks = sc.nextInt();
+                        System.out.print("IPK             : ");
+                        ipk = sc.nextDouble();
+                        sc.nextLine(); // Membersihkan buffer
+
+                        db.update(index, nimBaru, nama, alamat, semester, sks, ipk);
+                        System.out.println("DATA BERHASIL DIUPDATE");
                     } else {
                         System.err.println("Mahasiswa dengan NIM: " + key + " tidak ada di database");
                     }
-
                     break;
+
                 case "D":
                     System.out.println("INFO: Anda memilih menu Delete");
                     db.view();
-                    System.out.print("Input key (NIM Mahasiswa yang akan dihapus): ");
+                    System.out.print("Input Key (NIM Mahasiswa yang akan dihapus): ");
                     key = sc.nextLine();
                     index = db.search(key);
+
                     if (index >= 0) {
-                        System.out.print("APAKAH ANDA YAKIN AKAN MENGHAPUS DATA " + db.getData().get(index)+"? Y/N");
-                        System.out.print("Pilih : ");
-                        pilihan = sc.nextLine();
-                        if (pilihan.equalsIgnoreCase("Y")) {
+                        Mahasiswa mhs = db.getData().get(index);
+                        System.out.println("Anda akan menghapus data:");
+                        System.out.println("NIM: " + mhs.getNim() + ", Nama: " + mhs.getNama());
+                        System.out.print("Apakah Anda yakin ingin menghapus data ini? (Y/N): ");
+                        pilihan = sc.nextLine().trim().toUpperCase();
+
+                        if (pilihan.equals("Y")) {
                             status = db.delete(index);
-                            if(status == true) {
+                            if (status) {
                                 System.out.println("DATA BERHASIL DIHAPUS");
                             } else {
-                                System.err.println("GAGAL MENGHAPUS DATA");
+                                System.out.println("GAGAL MENGHAPUS DATA");
                             }
-
-                        }else {
-                            System.err.println("Mahasiswa dengan NIM: " + key + "tidak ada di database");
                         }
+                    } else {
+                        System.err.println("Mahasiswa dengan NIM: " + key + " tidak ada di database");
                     }
-
                     break;
-                case "X":
-                    System.out.println("INFO: Anda memilih menu EXIT!");
-                    System.out.println("APAKAH ANDA YAKIN AKAN KELUAR DARI APLIKASI? Y/N");
-                    System.out.print("Pilih : ");
-                    pilihan = sc.nextLine();
 
-                    if (pilihan.equalsIgnoreCase("Y")) {
+                case "X":
+                    System.out.println("INFO: Anda memilih menu EXIT");
+                    System.out.print("APAKAH ANDA YAKIN AKAN KELUAR DARI APLIKASI? (Y/N): ");
+                    pilihan = sc.nextLine().trim().toUpperCase();
+
+                    if (pilihan.equals("Y")) {
+                        System.out.println("Aplikasi ditutup.");
+                        sc.close();  // Menutup Scanner sebelum keluar
                         System.exit(0);
                     }
-
                     break;
 
+                default:
+                    System.out.println("Pilihan tidak valid! Silakan pilih menu yang tersedia.");
             }
-
-
         }
     }
-
 }
